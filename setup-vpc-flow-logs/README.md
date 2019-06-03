@@ -19,35 +19,34 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py --help
 ## How To Use
 #### Help output sample
 ```
-$ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py -h
-usage: setup_vpc_flow_logs.py [-h]
-                              {describe_vpcs_without_flow_log,enable_flow_logs}
-                              ...
-
-positional arguments:
-  {describe_vpcs_without_flow_log,enable_flow_logs}
-    describe_vpcs_without_flow_log
-                        List all vpc instances that do not have flow log
-                        enabled, along side their name, region and tags
-    enable_flow_logs    Enables flow logs to VPCs that do not have flow log
-                        enabled
-
-optional arguments:
-  -h, --help            show this help message and exit
+$ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py --help
+  usage: setup_vpc_flow_logs.py [-h]
+                                {describe_vpcs_flow_log,enable_flow_logs} ...
+  
+  positional arguments:
+    {describe_vpcs_flow_log,enable_flow_logs}
+      describe_vpcs_flow_log
+                          List all vpc instances and their flow log status along
+                          side related region and tags.
+      enable_flow_logs    Enables flow logs to VPCs that do not have flow log
+                          enabled
+  
+  optional arguments:
+    -h, --help            show this help message and exit
 
 ```
 ## Script execution steps:
-### Command: describe_vpcs_without_flow_log 
+### Command: describe_vpcs_flow_log 
 ```bash
-pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_without_flow_log
+pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_log
 ```
 #### Sample Output
 ```
-| VpcId    |  VpcName    |  Region   | Tags                          |
+| VpcId    | Vpc Enabled |  Region   | Tags                          |
 |----------+-------------+-----------+-------------------------------|
-| vpc-09aa | vpc-app     | us-west-2 | cf-stack=app-stack,stage=prod |
-| vpc-09bb | vpc-db      | us-west-2 | cf-stack=db-stack,stage=dev   |
-| vpc-09aa | vpc-monitor | us-east-1 | cf-stack=es-stack             |
+| vpc-09aa | True        | us-west-2 | cf-stack=app-stack,stage=prod |
+| vpc-09bb | True        | us-west-2 | cf-stack=db-stack,stage=dev   |
+| vpc-09aa | False       | us-east-1 | cf-stack=es-stack             |
 
 ```
 ### Command: enable_flow_logs
