@@ -67,15 +67,15 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_
 #### Sample Output
 Flow logs configured for VPC:
 
-![vpc flow log](/images/vpc_with_flowlog.png)
+![vpc flow log](https://raw.githubusercontent.com/bridgecrewio/HowCrew/master/setup-vpc-flow-logs/images/vpc_with_flowlog.png)
 
 A new s3 bucket with vpc flow logs:
 
-![vpc flow log s3 bucket](/images/s3_bucket.png)
+![vpc flow log s3 bucket](https://raw.githubusercontent.com/bridgecrewio/HowCrew/master/setup-vpc-flow-logs/images/s3_bucket.png)
 
 Lifecycle expiration policy on the s3 bucket:
 
-![bucket lifecycle](/images/lifecycle.png)
+![bucket lifecycle](https://raw.githubusercontent.com/bridgecrewio/HowCrew/master/setup-vpc-flow-logs/images/lifecycle.png)
 
 
 #### Investigating VPC Flow log
