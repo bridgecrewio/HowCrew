@@ -62,10 +62,11 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_
                            RN/optional_folder/AWSLogs/aws_account_id/vpcflowlogs/
                            region/year/month/day/aws_account_id_vpcflowlogs_regio
                            n_flow_log_id_timestamp_hash.log.gz Bucket is created
-                           with lifecycle rule to expire logs older then 365 days
+                           with lifecycle rule to expire logs older then 365 days. 
+                           NOTICE: flow logs will be created for all VPCs that do not have one 
 ```
 #### Sample Output
-Flow logs configured for VPC:
+Flow logs configured for all VPCs that did not have one enabled:
 
 ![vpc flow log](https://raw.githubusercontent.com/bridgecrewio/HowCrew/master/setup-vpc-flow-logs/images/vpc_with_flowlog.png)
 

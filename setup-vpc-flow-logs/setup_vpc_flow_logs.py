@@ -190,7 +190,8 @@ if __name__ == '__main__':
              'the path pattern: '
              'bucket_ARN/optional_folder/AWSLogs/aws_account_id/vpcflowlogs/region/year/month'
              '/day/aws_account_id_vpcflowlogs_region_flow_log_id_timestamp_hash.log.gz'
-             '\n Bucket is created with lifecycle rule to expire logs older then 365 days')
+             '\n Bucket is created with lifecycle rule to expire logs older then 365 days'
+             '\n NOTICE: flow logs will be created for all VPCs that do not have one')
 
     kwargs = vars(parser.parse_args())
     if not kwargs['subparser']:
