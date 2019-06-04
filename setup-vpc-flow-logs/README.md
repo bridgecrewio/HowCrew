@@ -42,11 +42,11 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_
 ```
 #### Sample Output
 ```
-| VpcId    | Vpc Enabled |  Region   | Tags                          |
-|----------+-------------+-----------+-------------------------------|
-| vpc-09aa | True        | us-west-2 | cf-stack=app-stack,stage=prod |
-| vpc-09bb | True        | us-west-2 | cf-stack=db-stack,stage=dev   |
-| vpc-09aa | False       | us-east-1 | cf-stack=es-stack             |
+| VpcId    | Flow log Enabled |  Region   | Tags                              |
+|----------+------------------+-----------+-----------------------------------|
+| vpc-09aa | TRUE             | us-west-2 | {cf-stack=app-stack},{stage=prod} |
+| vpc-09bb | TRUE             | us-west-2 | {cf-stack=db-stack},{stage=dev}   |
+| vpc-09cc | FALSE            | us-east-1 | {cf-stack=es-stack}               |
 
 ```
 ### Command: enable_flow_logs
@@ -65,7 +65,19 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_
                            with lifecycle rule to expire logs older then 365 days
 ```
 #### Sample Output
-// TODO: add bucket print screens
+Flow logs configured for VPC:
+
+![vpc flow log](/images/vpc_with_flowlog.png)
+
+A new s3 bucket with vpc flow logs:
+
+![vpc flow log s3 bucket](/images/s3_bucket.png)
+
+Lifecycle expiration policy on the s3 bucket:
+
+![bucket lifecycle](/images/lifecycle.png)
+
+
 #### Investigating VPC Flow log
 For forensic purposes, you can configure to view VPC flow data via AWS Athena (or any other forensic tool).
 For further details see the [official guide]( https://docs.aws.amazon.com/athena/latest/ug/vpc-flow-logs.html).

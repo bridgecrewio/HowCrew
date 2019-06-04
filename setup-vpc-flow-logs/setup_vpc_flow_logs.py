@@ -1,8 +1,21 @@
 import boto3
-# from tabulate import tabulate
-import json
+
 from texttable import Texttable
 import argparse
+import logging
+import os
+import sys
+
+# define logger
+logger = logging.getLogger()
+logger.setLevel(os.environ.get('LOG_LEVEL', 'INFO'))
+handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+
+# default region is used only to query global params. The code logic iterates over all regions
+DEFAULT_REGION = "us-west-2"
 
 
 def get_account_id():
@@ -10,21 +23,25 @@ def get_account_id():
 
     :return: current AWS account id
     """
-    client = boto3.client("sts")
+    # region name is not necessary here, using a default one
+    client = boto3.client("sts", region_name=DEFAULT_REGION)
     return client.get_caller_identity()["Account"]
 
 
-def get_all_vpcs():
+def get_all_vpcs(region):
     """
 
     :return: describe vpc for all active VPCs established in the current aws account
     """
-    client = boto3.client('ec2')
+    client = boto3.client('ec2', region_name=region)
+    account_id = get_account_id()
+
+    logger.debug("searching for VPCs in region {} for AWS account {}".format(region, account_id))
     return client.describe_vpcs(Filters=[
         {
             'Name': 'owner-id',
             'Values': [
-                get_account_id(),
+                account_id,
             ]
         },
         {
@@ -33,13 +50,19 @@ def get_all_vpcs():
                 'available',
             ]
         },
-    ])
+
+    ], MaxResults=1000)
 
 
-def categorize_vpc_flow_log_status():
-    client = boto3.client('ec2')
+def categorize_vpc_flow_log_status(region):
+    """
 
-    all_vpcs = get_all_vpcs()
+    :param region: region to scan
+    :return: dictionary containing list of vpc's with flow log enabled and once without
+    """
+    client = boto3.client('ec2', region_name=region)
+
+    all_vpcs = get_all_vpcs(region)
     vpc_id_dict = {}
     if all_vpcs['Vpcs']:
         for x in all_vpcs['Vpcs']:
@@ -57,30 +80,97 @@ def categorize_vpc_flow_log_status():
     for vpc_id, vpc_obj in vpc_id_dict.items():
         if vpc_id not in categorized_vpcs['flow_log_enabled'].keys():
             categorized_vpcs['flow_log_disabled'][vpc_id] = vpc_obj
+    logger.debug("Region {} vpcs: flow_log_enabled:{} flow_log_disabled:{}".format(region, len(
+        categorized_vpcs['flow_log_enabled']), len(categorized_vpcs['flow_log_disabled'])))
     return categorized_vpcs
 
 
-def tags_to_str(tags):
-    return ', '.join("{" + d['Key'] + "=" + d['Value'] + "}" for d in tags)
+def tags_to_str(vpc):
+    if 'Tags' in vpc:
+        return ', '.join("{" + d['Key'] + "=" + d['Value'] + "}" for d in vpc['Tags'])
+    else:
+        return ""
 
 
-def describe_vpcs_flow_log():
+def describe_vpcs_flow_log(print_table=True):
     """
     Prints prettified table with the following columns:'VpcId', 'Vpc Enabled', 'Region', 'Tags'
     """
-    t = Texttable()
-    t.add_row(['VpcId', 'Vpc Enabled', 'Region', 'Tags'])
+    logger.info("Scanning all VPCs - this might take some time... ")
 
-    categorized_vpcs = categorize_vpc_flow_log_status()
-    for vpc_key, vpc_obj in categorized_vpcs['flow_log_enabled'].items():
-        t.add_row([vpc_key, 'TRUE', 'Region', tags_to_str(vpc_obj['Tags'])])
-    for vpc_key, vpc_obj in categorized_vpcs['flow_log_disabled'].items():
-        t.add_row([vpc_key, 'FALSE', 'Region', tags_to_str(vpc_obj['Tags'])])
-    print(t.draw())
+    t = Texttable()
+    t.add_row(['VpcId', 'Flow log Enabled', 'Region', 'Tags'])
+    client = boto3.client("ec2", region_name=DEFAULT_REGION)
+    regions = [region['RegionName'] for region in client.describe_regions()['Regions']]
+    all_categorized_vpcs = {}
+    for region in regions:
+        categorized_vpcs_in_region = categorize_vpc_flow_log_status(region)
+        all_categorized_vpcs[region] = categorized_vpcs_in_region
+        for vpc_key, vpc_obj in categorized_vpcs_in_region['flow_log_enabled'].items():
+            t.add_row([vpc_key, 'TRUE', region, tags_to_str(vpc_obj)])
+        for vpc_key, vpc_obj in categorized_vpcs_in_region['flow_log_disabled'].items():
+            t.add_row([vpc_key, 'FALSE', region, tags_to_str(vpc_obj)])
+    if print_table:
+        print(t.draw())
+    return all_categorized_vpcs
 
 
 def enable_flow_logs(bucket):
-    print('task b', bucket)
+    """
+    Creates new s3 bucket with lifecycle policy of 1 year and enable flow log on all vpc's without flow log to write
+    into that bucket
+    :param bucket: name of bucket to create
+    """
+    s3 = boto3.client("s3")
+    create_flow_log_bucket(bucket, s3)
+    vpcs = describe_vpcs_flow_log(print_table=False)
+    bucket_arn = 'arn:aws:s3:::{}'.format(bucket)
+    flow_logs_cnt = 0
+    for region in vpcs.keys():
+        region_vpcs = vpcs[region]
+        region_vpcs_without_flow_log = region_vpcs['flow_log_disabled']
+        region_client = boto3.client("ec2", region_name=region)
+
+        for vpc_key, vpc_obj in region_vpcs_without_flow_log.items():
+            flow_logs_resp = region_client.create_flow_logs(ResourceIds=[vpc_key], ResourceType='VPC',
+                                                            TrafficType='ALL',
+                                                            LogDestinationType='s3', LogDestination=bucket_arn)
+            if len(flow_logs_resp['Unsuccessful']) > 0:
+                logger.error(
+                    "Failed to create flow log for vpc={} in region={} error message={}".format(vpc_key, region,
+                                                                                                flow_logs_resp[
+                                                                                                    'Unsuccessful'][0][
+                                                                                                    'Error'][
+                                                                                                    'Message']))
+            else:
+                flow_logs_cnt += 1
+    if flow_logs_cnt > 0:
+        logger.info("successfully created {} flow logs".format(flow_logs_cnt))
+
+
+def create_flow_log_bucket(bucket, s3):
+    """
+        creates a bucket with lifecycle expiration policy of 1 year
+    :param bucket: name of bucket to create
+    :param s3: s3 boto3 client
+    """
+    s3.create_bucket(Bucket=bucket)
+    s3.put_bucket_lifecycle_configuration(
+        Bucket=bucket,
+        LifecycleConfiguration={
+            'Rules': [
+                {
+                    'Expiration': {
+                        'Days': 365,
+                    },
+                    'Prefix': '',
+                    'ID': bucket + '_lifecycle_conf',
+
+                    'Status': 'Enabled',
+                }
+            ]
+        }
+    )
 
 
 if __name__ == '__main__':
@@ -107,7 +197,3 @@ if __name__ == '__main__':
         parser.print_help()
         exit('Missing positional arguments')
     globals()[kwargs.pop('subparser')](**kwargs)
-
-#
-
-# print(tabulate(list(vpc_with_flowlog.values())))
