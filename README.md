@@ -7,3 +7,4 @@ Powered by:
 
 ## Tools
 * [Setup VPC Flow log collection to s3](setup-vpc-flow-logs/README.md)
+* Need additional tools? leave a request at [bridgecrew.io](https://www.bridgecrew.io/)
