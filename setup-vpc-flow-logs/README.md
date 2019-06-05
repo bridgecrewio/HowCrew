@@ -12,8 +12,8 @@ The following tool enables:
  
 ```bash
 git clone https://github.com/bridgecrewio/HowCrew.git
-cd HomeCrew/
-pipenv Install
+cd HowCrew/
+pipenv install
 pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py --help
 ```
 ## How To Use
