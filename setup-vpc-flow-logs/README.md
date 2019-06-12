@@ -63,6 +63,8 @@ pipenv run python setup-vpc-flow-logs/setup_vpc_flow_logs.py describe_vpcs_flow_
                            region/year/month/day/aws_account_id_vpcflowlogs_regio
                            n_flow_log_id_timestamp_hash.log.gz Bucket is created
                            with lifecycle rule to expire logs older then 365 days. 
+                           Bucket will have versioning turned on.
+                           Bucket will have Block all public access turned on.
                            NOTICE: flow logs will be created for all VPCs that do not have one 
 ```
 #### Sample Output

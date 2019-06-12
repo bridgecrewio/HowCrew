@@ -179,6 +179,8 @@ def create_flow_log_bucket(bucket, s3):
                                    'BlockPublicPolicy': True ,
                                    'RestrictPublicBuckets': True
                                })
+    bucket_versioning = boto3.resource('s3').BucketVersioning(bucket)
+    bucket_versioning.enable()
 
 
 if __name__ == '__main__':
@@ -199,6 +201,8 @@ if __name__ == '__main__':
              'bucket_ARN/optional_folder/AWSLogs/aws_account_id/vpcflowlogs/region/year/month'
              '/day/aws_account_id_vpcflowlogs_region_flow_log_id_timestamp_hash.log.gz'
              '\n Bucket is created with lifecycle rule to expire logs older then 365 days'
+             '\n Bucket will have versioning turned on.'
+             '\nBucket will have Block all public access turned on.'
              '\n NOTICE: flow logs will be created for all VPCs that do not have one')
 
     kwargs = vars(parser.parse_args())
