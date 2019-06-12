@@ -172,6 +172,14 @@ def create_flow_log_bucket(bucket, s3):
         }
     )
 
+    s3.put_public_access_block(Bucket=bucket,
+                               PublicAccessBlockConfiguration={
+                                   'BlockPublicAcls': True ,
+                                   'IgnorePublicAcls': True ,
+                                   'BlockPublicPolicy': True ,
+                                   'RestrictPublicBuckets': True
+                               })
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
