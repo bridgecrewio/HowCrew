@@ -30,11 +30,11 @@ sls deploy --backup-bucket ${NAME_OF_BUCKET_TO_CREATE} --backup-interval ${INTER
 |-----------------|---------------------------------------------------------|---------------|
 | backup-bucket   | Name of S3 bucket to create and backup dns records into | ${AWS_ACCOUNT_ID}-route53|
 | backup-interval | Interval, in minutes, of scheduled backup               | 120 minutes |
-| region          | Region of lambdas to be deployed                        | us-west-2 |
+| region          | Region of resources to be deployed                        | us-west-2 |
 
 
 ## Manually triggering route53 backup 
-using aws CLI - trigger `restore-route53` lambda.
+using aws CLI - trigger `backup-route53` lambda.
 ```bash
 aws lambda invoke --function-name backup-route53 --log-type Tail --query 'LogResult' --output text |  base64 -d
 ```
@@ -43,6 +43,9 @@ using aws CLI - trigger `restore-route53` lambda.
 ```bash
 aws lambda invoke --function-name restore-route53 --log-type Tail --query 'LogResult' --output text |  base64 -d
 ```
+
+## Backup json structure
+TODO
 
 ## Route53 backup bucket security configuration
 When the lambda creates the S3 bucket it ensures that it has:
