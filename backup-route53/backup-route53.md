@@ -22,30 +22,27 @@ The following tool enables:
 git clone https://github.com/bridgecrewio/HowCrew.git
 cd HowCrew/backup-route53
 npm i 
-sls deploy --backup-bucket ${NAME_OF_BUCKET_TO_CREATE} --backup-interval ${INTERVAL_IN_MINUTES}
+sls deploy --backup-interval ${INTERVAL_IN_MINUTES} --retention-period ${RETENTION_PERIOD} --region ${REGION} --aws-profile ${PROFILE}
 ```
 ### Deployment parameters:
 
 | Key             | Description                                             | Default value |
 |-----------------|---------------------------------------------------------|---------------|
-| backup-bucket   | Name of S3 bucket to create and backup dns records into | ${AWS_ACCOUNT_ID}-route53|
-| backup-interval | Interval, in minutes, of scheduled backup               | 120 minutes |
-| region          | Region of resources to be deployed                        | us-west-2 |
+| region          | Region of resources to be deployed                      | us-east-1     |
+| backup-interval | Interval, in minutes, of scheduled backup               | 120 minutes   |
+| retention-period| The time, in days, the backup is stored for             | 14            |
 
 
 ## Manually triggering route53 backup 
 using aws CLI - trigger `backup-route53` lambda.
 ```bash
-aws lambda invoke --function-name backup-route53 --log-type Tail --query 'LogResult' --output text |  base64 -d
+aws lambda invoke --function-name backup-route53 --profile ${profile} --region ${region} --output text /dev/stdout
 ```
 ## Restoring data from bucket
 using aws CLI - trigger `restore-route53` lambda.
 ```bash
-aws lambda invoke --function-name restore-route53 --log-type Tail --query 'LogResult' --output text |  base64 -d
+aws lambda invoke --function-name restore-route53 --profile ${profile} --region ${region} --output text /dev/stdout
 ```
-
-## Backup json structure
-TODO
 
 ## Route53 backup bucket security configuration
 When the lambda creates the S3 bucket it ensures that it has:
@@ -53,3 +50,4 @@ When the lambda creates the S3 bucket it ensures that it has:
 * Data encrypted at rest
 * Data encrypted at transport
 * Bucket is set to private
+* Bucket has lifecycle policy that deletes files older than `retention-period` days
