@@ -1,5 +1,5 @@
 # HowCrew
-We believe cloud-native companies need a new type of security solution. We’ve built a team of super-hero DevOps engineers from diverse security and cloud engineering backgrounds to supply the next generation of security services. That’s how we help cloud-native companies build and operate securely using the public-cloud.
+We believe cloud-native companies need a new type of security solutions. We’ve built a team of super-hero DevOps engineers from diverse security and cloud engineering backgrounds to supply the next generation of security services. That’s how we help cloud-native companies build and operate securely using the public-cloud.
 
 Check out some of the tools we've built and shared with our customers and partners
 
