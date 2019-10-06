@@ -6,7 +6,7 @@ Check out some of the tools we've built and shared with our customers and partne
 
 ## Tools
 * [Setup AWS VPC Flow log collection to s3](setup-vpc-flow-logs/setup-vpc-flow-logs.md)
-* [Setup AWS Route53 backup and recovery](https://github.com/bridgecrewio/aws-route53-backup-restore)
+* [Setup AWS Route53 backup and recovery](https://github.com/bridgecrewio/terraform-aws-route53-backup-restore)
 * [Setup GCP audit trail bucket](gcp-audit-trail-gcs-bucket/README.md)
 
 
