@@ -230,7 +230,7 @@ if __name__ == '__main__':
     parser_b.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
                           help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
                                "all VPCs are updated.")
-    
+
     # By default, all arguments starting with - or -- are grouped under "optional arguments" in the help text, even if
     # they are marked as required during construction. This workaround makes them show under a separate header in the
     # help text.
@@ -243,7 +243,7 @@ if __name__ == '__main__':
              '/day/aws_account_id_vpcflowlogs_region_flow_log_id_timestamp_hash.log.gz'
              '\n Bucket is created with lifecycle rule to expire logs older then 365 days'
              '\n Bucket will have versioning turned on.'
-             '\nBucket will have Block all public access turned on.')
+             '\n Bucket will have Block all public access turned on.')
 
     parser_disable = subparsers.add_parser('disable_flow_logs', help='Disables flow logs for all VPCs that have '
                                                                      'them enabled (unless --vpcs is specified).')
