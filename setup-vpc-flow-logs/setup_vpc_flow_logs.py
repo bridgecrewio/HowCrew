@@ -230,8 +230,7 @@ if __name__ == '__main__':
     parser_b.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
                           help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
                                "all VPCs are updated.")
-    parser_b = subparsers.add_parser('enable_flow_logs', help='Enables flow logs to VPCs that do not have '
-                                                              'flow log enabled')
+    
     # By default, all arguments starting with - or -- are grouped under "optional arguments" in the help text, even if
     # they are marked as required during construction. This workaround makes them show under a separate header in the
     # help text.
