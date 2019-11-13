@@ -230,9 +230,15 @@ if __name__ == '__main__':
     parser_b.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
                           help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
                                "all VPCs are updated.")
-    parser_b.add_argument(
-        '-b', '--bucket', dest='bucket',
-        help='determines the name of the new flow log bucket. \n All flow logs will be listed in '
+    parser_b = subparsers.add_parser('enable_flow_logs', help='Enables flow logs to VPCs that do not have '
+                                                              'flow log enabled')
+    # By default, all arguments starting with - or -- are grouped under "optional arguments" in the help text, even if
+    # they are marked as required during construction. This workaround makes them show under a separate header in the
+    # help text.
+    required_args = parser_b.add_argument_group('required arguments')
+    required_args.add_argument(
+        '-b', '--bucket', dest='bucket', required=True,
+        help='The name of the new flow log bucket. \n All flow logs will be listed in '
              'the path pattern: '
              'bucket_ARN/optional_folder/AWSLogs/aws_account_id/vpcflowlogs/region/year/month'
              '/day/aws_account_id_vpcflowlogs_region_flow_log_id_timestamp_hash.log.gz'
