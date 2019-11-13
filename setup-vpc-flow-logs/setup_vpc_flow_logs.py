@@ -183,6 +183,37 @@ def create_flow_log_bucket(bucket, s3):
     bucket_versioning.enable()
 
 
+def disable_flow_logs():
+    """
+    Creates new s3 bucket with lifecycle policy of 1 year and enable flow log on all vpc's without flow log to write
+    into that bucket
+    :param bucket: name of bucket to create
+    """
+    s3 = boto3.client("s3")
+    vpcs = describe_vpcs_flow_log(print_table=False)
+    flow_logs_cnt = 0
+    for region in vpcs.keys():
+        region_vpcs = vpcs[region]
+        region_vpcs_with_flow_log = region_vpcs['flow_log_enabled']
+        region_client = boto3.client("ec2", region_name=region)
+
+        for vpc_key, vpc_obj in region_vpcs_with_flow_log.items():
+            flow_logs = region_client.describe_flow_logs(Filters=[{"Name": "resource-id", "Values": [vpc_key]}])
+            log_id = flow_logs['FlowLogs'][0]['FlowLogId']
+            flow_logs_resp = region_client.delete_flow_logs(FlowLogIds=[log_id])
+            if len(flow_logs_resp['Unsuccessful']) > 0:
+                logger.error(
+                    "Failed to disable flow log for vpc={} in region={}; error message={}".format(vpc_key, region,
+                                                                                                  flow_logs_resp[
+                                                                                                    'Unsuccessful'][0][
+                                                                                                    'Error'][
+                                                                                                    'Message']))
+            else:
+                flow_logs_cnt += 1
+    if flow_logs_cnt > 0:
+        logger.info("successfully disabled {} flow logs".format(flow_logs_cnt))
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subparser')
@@ -208,6 +239,9 @@ if __name__ == '__main__':
              '\n Bucket will have versioning turned on.'
              '\n Bucket will have Block all public access turned on.'
              '\n NOTICE: flow logs will be created for all VPCs that do not have one')
+
+    parser_disable = subparsers.add_parser('disable_flow_logs', help='Disables flow logs for VPCs that have '
+                                                                     'them enabled.')
 
     kwargs = vars(parser.parse_args())
     if not kwargs['subparser']:
