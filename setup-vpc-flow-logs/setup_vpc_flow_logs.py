@@ -115,7 +115,7 @@ def describe_vpcs_flow_log(print_table=True):
     return all_categorized_vpcs
 
 
-def enable_flow_logs(bucket):
+def enable_flow_logs(bucket, vpc_ids):
     """
     Creates new s3 bucket with lifecycle policy of 1 year and enable flow log on all vpc's without flow log to write
     into that bucket
@@ -132,18 +132,19 @@ def enable_flow_logs(bucket):
         region_client = boto3.client("ec2", region_name=region)
 
         for vpc_key, vpc_obj in region_vpcs_without_flow_log.items():
-            flow_logs_resp = region_client.create_flow_logs(ResourceIds=[vpc_key], ResourceType='VPC',
-                                                            TrafficType='ALL',
-                                                            LogDestinationType='s3', LogDestination=bucket_arn)
-            if len(flow_logs_resp['Unsuccessful']) > 0:
-                logger.error(
-                    "Failed to create flow log for vpc={} in region={} error message={}".format(vpc_key, region,
-                                                                                                flow_logs_resp[
-                                                                                                    'Unsuccessful'][0][
-                                                                                                    'Error'][
-                                                                                                    'Message']))
-            else:
-                flow_logs_cnt += 1
+            if vpc_ids is None or len(vpc_ids) == 0 or vpc_key in vpc_ids:
+                flow_logs_resp = region_client.create_flow_logs(ResourceIds=[vpc_key], ResourceType='VPC',
+                                                                TrafficType='ALL',
+                                                                LogDestinationType='s3', LogDestination=bucket_arn)
+                if len(flow_logs_resp['Unsuccessful']) > 0:
+                    logger.error(
+                        "Failed to create flow log for vpc={} in region={} error message={}".format(vpc_key, region,
+                                                                                                    flow_logs_resp[
+                                                                                                        'Unsuccessful'][0][
+                                                                                                        'Error'][
+                                                                                                        'Message']))
+                else:
+                    flow_logs_cnt += 1
     if flow_logs_cnt > 0:
         logger.info("successfully created {} flow logs".format(flow_logs_cnt))
 
@@ -183,7 +184,7 @@ def create_flow_log_bucket(bucket, s3):
     bucket_versioning.enable()
 
 
-def disable_flow_logs():
+def disable_flow_logs(vpc_ids):
     """
     Creates new s3 bucket with lifecycle policy of 1 year and enable flow log on all vpc's without flow log to write
     into that bucket
@@ -198,18 +199,19 @@ def disable_flow_logs():
         region_client = boto3.client("ec2", region_name=region)
 
         for vpc_key, vpc_obj in region_vpcs_with_flow_log.items():
-            flow_logs = region_client.describe_flow_logs(Filters=[{"Name": "resource-id", "Values": [vpc_key]}])
-            log_id = flow_logs['FlowLogs'][0]['FlowLogId']
-            flow_logs_resp = region_client.delete_flow_logs(FlowLogIds=[log_id])
-            if len(flow_logs_resp['Unsuccessful']) > 0:
-                logger.error(
-                    "Failed to disable flow log for vpc={} in region={}; error message={}".format(vpc_key, region,
-                                                                                                  flow_logs_resp[
-                                                                                                    'Unsuccessful'][0][
-                                                                                                    'Error'][
-                                                                                                    'Message']))
-            else:
-                flow_logs_cnt += 1
+            if vpc_ids is None or len(vpc_ids) == 0 or vpc_key in vpc_ids:
+                flow_logs = region_client.describe_flow_logs(Filters=[{"Name": "resource-id", "Values": [vpc_key]}])
+                log_id = flow_logs['FlowLogs'][0]['FlowLogId']
+                flow_logs_resp = region_client.delete_flow_logs(FlowLogIds=[log_id])
+                if len(flow_logs_resp['Unsuccessful']) > 0:
+                    logger.error(
+                        "Failed to disable flow log for vpc={} in region={}; error message={}".format(vpc_key, region,
+                                                                                                      flow_logs_resp[
+                                                                                                        'Unsuccessful'][0][
+                                                                                                        'Error'][
+                                                                                                        'Message']))
+                else:
+                    flow_logs_cnt += 1
     if flow_logs_cnt > 0:
         logger.info("successfully disabled {} flow logs".format(flow_logs_cnt))
 
@@ -225,6 +227,9 @@ if __name__ == '__main__':
 
     parser_b = subparsers.add_parser('enable_flow_logs', help='Enables flow logs to VPCs that do not have '
                                                               'flow log enabled')
+    parser_b.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
+                          help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
+                               "all VPCs are updated.")
     parser_b.add_argument(
         '-b', '--bucket', dest='bucket',
         help='determines the name of the new flow log bucket. \n All flow logs will be listed in '
@@ -238,6 +243,9 @@ if __name__ == '__main__':
 
     parser_disable = subparsers.add_parser('disable_flow_logs', help='Disables flow logs for VPCs that have '
                                                                      'them enabled.')
+    parser_disable.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
+                                help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
+                                     "all VPCs are updated.")
 
     kwargs = vars(parser.parse_args())
     if not kwargs['subparser']:
