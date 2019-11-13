@@ -225,8 +225,8 @@ if __name__ == '__main__':
                                                                'along side related region and tags. '
                                                           )
 
-    parser_b = subparsers.add_parser('enable_flow_logs', help='Enables flow logs to VPCs that do not have '
-                                                              'flow log enabled')
+    parser_b = subparsers.add_parser('enable_flow_logs', help='Enables flow logs to all VPCs that do not have '
+                                                              'flow log enabled (unless --vpcs is specified).')
     parser_b.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
                           help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
                                "all VPCs are updated.")
@@ -238,11 +238,10 @@ if __name__ == '__main__':
              '/day/aws_account_id_vpcflowlogs_region_flow_log_id_timestamp_hash.log.gz'
              '\n Bucket is created with lifecycle rule to expire logs older then 365 days'
              '\n Bucket will have versioning turned on.'
-             '\nBucket will have Block all public access turned on.'
-             '\n NOTICE: flow logs will be created for all VPCs that do not have one')
+             '\nBucket will have Block all public access turned on.')
 
-    parser_disable = subparsers.add_parser('disable_flow_logs', help='Disables flow logs for VPCs that have '
-                                                                     'them enabled.')
+    parser_disable = subparsers.add_parser('disable_flow_logs', help='Disables flow logs for all VPCs that have '
+                                                                     'them enabled (unless --vpcs is specified).')
     parser_disable.add_argument('--vpcs', dest='vpc_ids', type=lambda l: l.split(','),
                                 help="Specify a comma-separated (no spaces) list of VPCs to update. If omitted,"
                                      "all VPCs are updated.")
